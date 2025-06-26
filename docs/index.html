@@ -2,49 +2,90 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8" />
-  <title>Pesquisa Simulada</title>
+  <title>CansadoDeExplicar</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
       height: 100vh;
+      background: linear-gradient(to bottom right, #f0f4f8, #dbe9f4);
       display: flex;
       justify-content: center;
       align-items: center;
-      font-family: sans-serif;
-      background: #f5f5f5;
+      font-family: 'Segoe UI', sans-serif;
+      flex-direction: column;
+      overflow: hidden;
     }
+
+    h1 {
+      margin-bottom: 30px;
+      color: #333;
+      font-size: 2.7rem;
+    }
+
     .search-container {
       display: flex;
       flex-direction: column;
       align-items: center;
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
     }
+
     input {
-      font-size: 1.5rem;
-      padding: 10px;
-      width: 300px;
+      font-size: 1.4rem;
+      padding: 12px;
+      width: 350px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      transition: border 0.3s ease;
     }
+
+    input:focus {
+      border-color: #0077cc;
+      outline: none;
+    }
+
     button {
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 1.2rem;
+      padding: 12px 30px;
+      font-size: 1.1rem;
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background-color 0.3s ease, transform 0.1s ease;
     }
+
+    button:hover {
+      background-color: #005fa3;
+    }
+
     .mouse-cursor {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      background: black;
-      border-radius: 50%;
+      position: fixed;
+      width: 24px;
+      height: 36px;
+      background: url('https://upload.wikimedia.org/wikipedia/commons/7/70/Arrow_cursor.svg') no-repeat center center;
+      background-size: contain;
       pointer-events: none;
-      transition: top 0.5s, left 0.5s;
+      z-index: 10000;
+      transition: transform 0.3s ease;
     }
   </style>
 </head>
 <body>
+  <h1>CansadoDeExplicar</h1>
+
   <div class="search-container">
     <input type="text" id="search" placeholder="Digite aqui..." />
     <button id="searchBtn">Pesquisar</button>
   </div>
+
   <div class="mouse-cursor" id="cursor"></div>
 
   <script>
@@ -56,7 +97,6 @@
     const button = document.getElementById('searchBtn');
     const cursor = document.getElementById('cursor');
 
-    // Função para simular digitação
     async function typeText(text, element, delay = 100) {
       for (let i = 0; i < text.length; i++) {
         element.value += text[i];
@@ -64,42 +104,60 @@
       }
     }
 
-    // Função para mover o cursor até um elemento
-    function moveCursorToElement(el) {
+    function smoothMoveCursorTo(el, duration = 1000) {
       const rect = el.getBoundingClientRect();
-      cursor.style.left = `${rect.left + rect.width / 2}px`;
-      cursor.style.top = `${rect.top + rect.height / 2}px`;
+      const targetX = rect.left + rect.width / 2;
+      const targetY = rect.top + rect.height / 2;
+
+      const startX = parseFloat(cursor.style.left) || 0;
+      const startY = parseFloat(cursor.style.top) || 0;
+
+      const startTime = performance.now();
+
+      function animate(time) {
+        const progress = Math.min((time - startTime) / duration, 1);
+        const ease = 0.5 - Math.cos(progress * Math.PI) / 2;
+
+        const currentX = startX + (targetX - startX) * ease;
+        const currentY = startY + (targetY - startY) * ease;
+
+        cursor.style.left = `${currentX}px`;
+        cursor.style.top = `${currentY}px`;
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        }
+      }
+
+      requestAnimationFrame(animate);
     }
 
     async function simulateSearch() {
-      // Posiciona o cursor fora da tela
-      cursor.style.left = `-100px`;
-      cursor.style.top = `-100px`;
+      // Começa fora da tela
+      cursor.style.left = `-50px`;
+      cursor.style.top = `-50px`;
 
-      await new Promise(res => setTimeout(res, 500));
+      await new Promise(res => setTimeout(res, 600));
 
       // Simula digitação
       await typeText(query, input);
 
-      await new Promise(res => setTimeout(res, 500));
+      await new Promise(res => setTimeout(res, 600));
 
-      // Move cursor até o botão
-      moveCursorToElement(button);
+      // Move até o botão
+      smoothMoveCursorTo(button, 1000);
 
-      await new Promise(res => setTimeout(res, 800));
+      await new Promise(res => setTimeout(res, 1200));
 
-      // Simula clique
+      // "Clique"
       button.click();
     }
 
-    // Ao clicar, redireciona
     button.addEventListener('click', () => {
       window.location.href = link;
     });
 
-    // Inicia animação
     simulateSearch();
   </script>
 </body>
 </html>
-
