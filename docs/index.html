@@ -1,173 +1,150 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CansadoDeExplicar</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
+    html, body {
+      height: 100%;
       margin: 0;
-      height: 100vh;
-      background: linear-gradient(to bottom right, #f0f4f8, #dbe9f4);
       display: flex;
       justify-content: center;
       align-items: center;
-      font-family: 'Segoe UI', sans-serif;
+      background: #f7f7f7;
       overflow: hidden;
     }
-
-    .search-container {
+    .main {
       display: flex;
       flex-direction: column;
       align-items: center;
-      background: white;
-      padding: 40px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-    }
-
-    h1 {
-      margin-bottom: 30px;
-      color: #333;
-      font-size: 2.5rem;
-    }
-
-    input {
-      font-size: 1.4rem;
-      padding: 12px;
-      width: 350px;
-      border: 1px solid #ccc;
+      background: #fff;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       border-radius: 8px;
-      margin-bottom: 20px;
-      transition: border 0.3s ease;
     }
-
-    input:focus {
-      border-color: #0077cc;
+    h1 {
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+    }
+    input {
+      padding: 0.5rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 4px 0 0 4px;
       outline: none;
     }
-
     button {
-      padding: 12px 30px;
-      font-size: 1.1rem;
-      background-color: #0077cc;
-      color: white;
-      border: none;
-      border-radius: 8px;
+      padding: 0.52rem 1rem;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-left: none;
+      border-radius: 0 4px 4px 0;
+      background: #ececec;
       cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.1s ease;
     }
-
-    button:hover {
-      background-color: #005fa3;
-    }
-
-    .mouse-cursor {
-      position: fixed;
-      width: 32px;
-      height: 48px;
-      background-image: url("data:image/svg+xml;utf8,<svg width='24' height='36' xmlns='http://www.w3.org/2000/svg'><polygon points='0,0 24,12 14,14 18,36 10,36 6,14 0,12' fill='black'/></svg>");
-      background-size: contain;
-      background-repeat: no-repeat;
+    #fake-cursor {
+      position: absolute;
+      width: 10px;
+      height: 14px;
+      border: 2px solid #000;
+      border-left: none;
+      border-bottom: none;
+      transform: rotate(45deg);
       pointer-events: none;
-      z-index: 9999;
-      left: 0;
-      top: 0;
+      opacity: 0;
     }
   </style>
 </head>
 <body>
-  <div class="search-container">
-    <h1>Cansado de Explicar</h1>
-    <input type="text" id="search" placeholder="Digite aqui..." />
-    <button id="searchBtn">Pesquisar</button>
+  <div class="main">
+    <h1>CansadoDeExplicar</h1>
+    <div class="search-box">
+      <input type="text" id="searchInput" autocomplete="off" />
+      <button id="searchBtn">Pesquisar</button>
+    </div>
   </div>
-
-  <div class="mouse-cursor" id="cursor"></div>
-
+  <div id="fake-cursor"></div>
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const query = params.get('q') || '';
-    const link = params.get('l') || '#';
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const text = params.get('q') || '';
+      const link = params.get('l') || '#';
+      const input = document.getElementById('searchInput');
+      const btn = document.getElementById('searchBtn');
+      const cursor = document.getElementById('fake-cursor');
+      let started = false;
 
-    const input = document.getElementById('search');
-    const button = document.getElementById('searchBtn');
-    const cursor = document.getElementById('cursor');
+      btn.addEventListener('click', () => {
+        window.location.href = link;
+      });
 
-    function easeInOutCubic(t) {
-      return t < 0.5
-        ? 4 * t * t * t
-        : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    }
-
-    async function typeText(text, element, delay = 100) {
-      for (let i = 0; i < text.length; i++) {
-        element.value += text[i];
-        await new Promise(res => setTimeout(res, delay));
-      }
-    }
-
-    function animateCursorTo(el, duration = 1200) {
-      const rect = el.getBoundingClientRect();
-      const targetX = rect.left + rect.width / 2;
-      const targetY = rect.top + rect.height / 2;
-
-      const startX = parseFloat(cursor.style.left) || 0;
-      const startY = parseFloat(cursor.style.top) || 0;
-
-      const startTime = performance.now();
-
-      function animate(time) {
-        const elapsed = (time - startTime) / duration;
-        const progress = Math.min(elapsed, 1);
-        const eased = easeInOutCubic(progress);
-
-        const currentX = startX + (targetX - startX) * eased;
-        const currentY = startY + (targetY - startY) * eased;
-
-        cursor.style.left = `${currentX}px`;
-        cursor.style.top = `${currentY}px`;
-
-        if (progress < 1) {
-          requestAnimationFrame(animate);
-        }
+      function typeText(str, el) {
+        return new Promise(resolve => {
+          let i = 0;
+          const interval = setInterval(() => {
+            el.value = str.slice(0, ++i);
+            if (i === str.length) {
+              clearInterval(interval);
+              setTimeout(resolve, 300);
+            }
+          }, 100);
+        });
       }
 
-      requestAnimationFrame(animate);
-    }
+      function moveCursor() {
+        return new Promise(resolve => {
+          const startRect = input.getBoundingClientRect();
+          const endRect = btn.getBoundingClientRect();
+          const startX = startRect.left + 10;
+          const startY = startRect.top + 10;
+          const endX = endRect.left + endRect.width / 2;
+          const endY = endRect.top + endRect.height / 2;
+          const ctrlX = (startX + endX) / 2;
+          const ctrlY = startY - 100;
+          const duration = 1000;
+          let start;
 
-    async function simulateSearch() {
-      cursor.style.left = `-50px`;
-      cursor.style.top = `-50px`;
+          cursor.style.left = startX + 'px';
+          cursor.style.top = startY + 'px';
+          cursor.style.opacity = 1;
 
-      await new Promise(res => setTimeout(res, 600));
-      await typeText(query, input);
-      await new Promise(res => setTimeout(res, 600));
-      animateCursorTo(button, 1000);
-      await new Promise(res => setTimeout(res, 1300));
-      button.click();
-    }
+          function step(timestamp) {
+            if (!start) start = timestamp;
+            const t = Math.min((timestamp - start) / duration, 1);
+            const x = (1 - t) ** 2 * startX + 2 * (1 - t) * t * ctrlX + t ** 2 * endX;
+            const y = (1 - t) ** 2 * startY + 2 * (1 - t) * t * ctrlY + t ** 2 * endY;
+            cursor.style.left = x + 'px';
+            cursor.style.top = y + 'px';
+            if (t < 1) {
+              requestAnimationFrame(step);
+            } else {
+              setTimeout(() => {
+                cursor.style.opacity = 0;
+                resolve();
+              }, 200);
+            }
+          }
+          requestAnimationFrame(step);
+        });
+      }
 
-    // Inicia apenas quando a aba está ativa
-    let started = false;
-    window.addEventListener('focus', () => {
-      if (!started) {
+      async function startAnimation() {
+        if (started) return;
         started = true;
-        simulateSearch();
+        await typeText(text, input);
+        await moveCursor();
+        btn.click();
       }
-    });
 
-    if (document.hasFocus()) {
-      simulateSearch();
-      started = true;
-    }
-
-    button.addEventListener('click', () => {
-      window.location.href = link;
-    });
+      window.addEventListener('focus', () => {
+        startAnimation();
+      });
+    })();
   </script>
 </body>
 </html>
