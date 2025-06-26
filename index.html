@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pesquisa Simulada</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: sans-serif;
+      background: #f5f5f5;
+    }
+    .search-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    input {
+      font-size: 1.5rem;
+      padding: 10px;
+      width: 300px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+    .mouse-cursor {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      background: black;
+      border-radius: 50%;
+      pointer-events: none;
+      transition: top 0.5s, left 0.5s;
+    }
+  </style>
+</head>
+<body>
+  <div class="search-container">
+    <input type="text" id="search" placeholder="Digite aqui..." />
+    <button id="searchBtn">Pesquisar</button>
+  </div>
+  <div class="mouse-cursor" id="cursor"></div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('q') || '';
+    const link = params.get('l') || '#';
+
+    const input = document.getElementById('search');
+    const button = document.getElementById('searchBtn');
+    const cursor = document.getElementById('cursor');
+
+    // Função para simular digitação
+    async function typeText(text, element, delay = 100) {
+      for (let i = 0; i < text.length; i++) {
+        element.value += text[i];
+        await new Promise(res => setTimeout(res, delay));
+      }
+    }
+
+    // Função para mover o cursor até um elemento
+    function moveCursorToElement(el) {
+      const rect = el.getBoundingClientRect();
+      cursor.style.left = `${rect.left + rect.width / 2}px`;
+      cursor.style.top = `${rect.top + rect.height / 2}px`;
+    }
+
+    async function simulateSearch() {
+      // Posiciona o cursor fora da tela
+      cursor.style.left = `-100px`;
+      cursor.style.top = `-100px`;
+
+      await new Promise(res => setTimeout(res, 500));
+
+      // Simula digitação
+      await typeText(query, input);
+
+      await new Promise(res => setTimeout(res, 500));
+
+      // Move cursor até o botão
+      moveCursorToElement(button);
+
+      await new Promise(res => setTimeout(res, 800));
+
+      // Simula clique
+      button.click();
+    }
+
+    // Ao clicar, redireciona
+    button.addEventListener('click', () => {
+      window.location.href = link;
+    });
+
+    // Inicia animação
+    simulateSearch();
+  </script>
+</body>
+</html>
+
