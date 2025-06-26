@@ -11,8 +11,10 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      background: #f7f7f7;
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       overflow: hidden;
+      cursor: default;
     }
     .main {
       display: flex;
@@ -20,49 +22,74 @@
       align-items: center;
       background: #fff;
       padding: 2rem;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      border-radius: 12px;
+      animation: fadeIn 0.8s ease-out;
     }
     h1 {
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+      color: #333;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    #description {
       margin-bottom: 1rem;
-      font-size: 1.5rem;
+      font-size: 1rem;
+      color: #555;
+      font-style: italic;
     }
     .search-box {
       display: flex;
       align-items: center;
     }
     input {
-      padding: 0.5rem;
+      padding: 0.6rem;
       font-size: 1rem;
-      border: 1px solid #ccc;
+      border: 1px solid #bbb;
       border-radius: 4px 0 0 4px;
       outline: none;
+      transition: box-shadow 0.3s;
+    }
+    input:focus {
+      box-shadow: 0 0 8px rgba(100, 150, 250, 0.5);
     }
     button {
-      padding: 0.52rem 1rem;
+      padding: 0.6rem 1.2rem;
       font-size: 1rem;
-      border: 1px solid #ccc;
+      border: 1px solid #bbb;
       border-left: none;
       border-radius: 0 4px 4px 0;
-      background: #ececec;
+      background: #5b8def;
+      color: #fff;
+      font-weight: bold;
       cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background: #4a76d1;
+      transform: translateY(-2px);
     }
     #fake-cursor {
       position: absolute;
-      width: 10px;
-      height: 14px;
-      border: 2px solid #000;
-      border-left: none;
-      border-bottom: none;
-      transform: rotate(45deg);
+      width: 32px;
+      height: 32px;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='32'><polygon points='0,0 0,24 6,18 10,30 13,29 9,17 16,17' fill='white' stroke='black' stroke-width='1.5'/></svg>");
+      background-size: contain;
+      background-repeat: no-repeat;
       pointer-events: none;
       opacity: 0;
+      transition: opacity 0.3s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
     }
   </style>
 </head>
 <body>
   <div class="main">
     <h1>CansadoDeExplicar</h1>
+    <p id="description"></p>
     <div class="search-box">
       <input type="text" id="searchInput" autocomplete="off" />
       <button id="searchBtn">Pesquisar</button>
@@ -70,18 +97,43 @@
   </div>
   <div id="fake-cursor"></div>
   <script>
+    function getFraseEngracadaAleatoria() {
+  const frases = [
+    "Porque explicar isso de novo vai custar minha sanidade.",
+    "Se eu ganhasse 1 real por cada explicação, já tinha comprado o Google.",
+    "Essa é a resposta automática do meu cérebro cansado.",
+    "Explicar pela milésima vez virou esporte olímpico.",
+    "Você já perguntou isso antes, mas tudo bem, vamos fingir que não.",
+    "Sou só um humilde script tentando evitar colapsos nervosos.",
+    "Resposta 100% feita com preguiça e amor.",
+    "Se eu tivesse que explicar de novo, o JavaScript choraria.",
+    "Não fui pago pra repetir, então toma esse link.",
+    "Explicar é um loop infinito. Ctrl+C, Ctrl+V é a saída.",
+    "Isso já foi explicado em outra instância dessa simulação.",
+    "Variável explicação = 'já foi definida';",
+    "Deixe-me compilar uma resposta pra você... pronto, tá aí."
+  ];
+
+  const indiceAleatorio = Math.floor(Math.random() * frases.length);
+  return frases[indiceAleatorio];
+}
+  
     (function() {
       const params = new URLSearchParams(window.location.search);
+      const rawLink = params.get('l') || '#';
+      const link = rawLink === '#' ? '#' : decodeURIComponent(rawLink);
       const text = params.get('q') || '';
-      const link = params.get('l') || '#';
+      const descText = params.get('d') || getFraseEngracadaAleatoria();
       const input = document.getElementById('searchInput');
       const btn = document.getElementById('searchBtn');
       const cursor = document.getElementById('fake-cursor');
+      const descEl = document.getElementById('description');
       let started = false;
 
-      btn.addEventListener('click', () => {
-        window.location.href = link;
-      });
+      // Preenche descrição
+      descEl.textContent = descText;
+
+      btn.addEventListener('click', () => window.location.href = link);
 
       function typeText(str, el) {
         return new Promise(resolve => {
@@ -90,7 +142,7 @@
             el.value = str.slice(0, ++i);
             if (i === str.length) {
               clearInterval(interval);
-              setTimeout(resolve, 300);
+              setTimeout(resolve, 200);
             }
           }, 100);
         });
@@ -98,52 +150,49 @@
 
       function moveCursor() {
         return new Promise(resolve => {
-          const startRect = input.getBoundingClientRect();
-          const endRect = btn.getBoundingClientRect();
-          const startX = startRect.left + 10;
-          const startY = startRect.top + 10;
-          const endX = endRect.left + endRect.width / 2;
-          const endY = endRect.top + endRect.height / 2;
+          const start = input.getBoundingClientRect();
+          const end = btn.getBoundingClientRect();
+          const startX = start.left + 12;
+          const startY = start.top + 12;
+          const endX = end.left + end.width / 2;
+          const endY = end.top + end.height / 2;
           const ctrlX = (startX + endX) / 2;
-          const ctrlY = startY - 100;
-          const duration = 1000;
-          let start;
+          const ctrlY = startY - 120;
+          const duration = 1200;
+          let startTime;
 
           cursor.style.left = startX + 'px';
           cursor.style.top = startY + 'px';
           cursor.style.opacity = 1;
 
-          function step(timestamp) {
-            if (!start) start = timestamp;
-            const t = Math.min((timestamp - start) / duration, 1);
+          function animate(time) {
+            if (!startTime) startTime = time;
+            const t = Math.min((time - startTime) / duration, 1);
             const x = (1 - t) ** 2 * startX + 2 * (1 - t) * t * ctrlX + t ** 2 * endX;
             const y = (1 - t) ** 2 * startY + 2 * (1 - t) * t * ctrlY + t ** 2 * endY;
             cursor.style.left = x + 'px';
             cursor.style.top = y + 'px';
-            if (t < 1) {
-              requestAnimationFrame(step);
-            } else {
-              setTimeout(() => {
-                cursor.style.opacity = 0;
-                resolve();
-              }, 200);
-            }
+            if (t < 1) requestAnimationFrame(animate);
+            else setTimeout(() => {
+              cursor.style.opacity = 0;
+              resolve();
+            }, 150);
           }
-          requestAnimationFrame(step);
+          requestAnimationFrame(animate);
         });
       }
 
       async function startAnimation() {
         if (started) return;
         started = true;
+        // delay de 1s antes de iniciar a digitação
+        await new Promise(r => setTimeout(r, 1000));
         await typeText(text, input);
         await moveCursor();
         btn.click();
       }
 
-      window.addEventListener('focus', () => {
-        startAnimation();
-      });
+      window.addEventListener('DOMContentLoaded', startAnimation);
     })();
   </script>
 </body>
