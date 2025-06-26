@@ -16,14 +16,7 @@
       justify-content: center;
       align-items: center;
       font-family: 'Segoe UI', sans-serif;
-      flex-direction: column;
       overflow: hidden;
-    }
-
-    h1 {
-      margin-bottom: 30px;
-      color: #333;
-      font-size: 2.7rem;
     }
 
     .search-container {
@@ -34,6 +27,12 @@
       padding: 40px;
       border-radius: 12px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      margin-bottom: 30px;
+      color: #333;
+      font-size: 2.5rem;
     }
 
     input {
@@ -75,13 +74,14 @@
       pointer-events: none;
       z-index: 10000;
       transition: transform 0.3s ease;
+      left: 0;
+      top: 0;
     }
   </style>
 </head>
 <body>
-  <h1>CansadoDeExplicar</h1>
-
   <div class="search-container">
+    <h1>CansadoDeExplicar</h1>
     <input type="text" id="search" placeholder="Digite aqui..." />
     <button id="searchBtn">Pesquisar</button>
   </div>
@@ -97,6 +97,12 @@
     const button = document.getElementById('searchBtn');
     const cursor = document.getElementById('cursor');
 
+    function easeInOutCubic(t) {
+      return t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+    }
+
     async function typeText(text, element, delay = 100) {
       for (let i = 0; i < text.length; i++) {
         element.value += text[i];
@@ -104,7 +110,7 @@
       }
     }
 
-    function smoothMoveCursorTo(el, duration = 1000) {
+    function animateCursorTo(el, duration = 1200) {
       const rect = el.getBoundingClientRect();
       const targetX = rect.left + rect.width / 2;
       const targetY = rect.top + rect.height / 2;
@@ -115,11 +121,12 @@
       const startTime = performance.now();
 
       function animate(time) {
-        const progress = Math.min((time - startTime) / duration, 1);
-        const ease = 0.5 - Math.cos(progress * Math.PI) / 2;
+        const elapsed = (time - startTime) / duration;
+        const progress = Math.min(elapsed, 1);
+        const eased = easeInOutCubic(progress);
 
-        const currentX = startX + (targetX - startX) * ease;
-        const currentY = startY + (targetY - startY) * ease;
+        const currentX = startX + (targetX - startX) * eased;
+        const currentY = startY + (targetY - startY) * eased;
 
         cursor.style.left = `${currentX}px`;
         cursor.style.top = `${currentY}px`;
@@ -133,31 +140,36 @@
     }
 
     async function simulateSearch() {
-      // Começa fora da tela
       cursor.style.left = `-50px`;
       cursor.style.top = `-50px`;
 
       await new Promise(res => setTimeout(res, 600));
-
-      // Simula digitação
       await typeText(query, input);
-
       await new Promise(res => setTimeout(res, 600));
-
-      // Move até o botão
-      smoothMoveCursorTo(button, 1000);
-
-      await new Promise(res => setTimeout(res, 1200));
-
-      // "Clique"
+      animateCursorTo(button, 1000);
+      await new Promise(res => setTimeout(res, 1300));
       button.click();
     }
 
+    // Inicia apenas quando a aba está ativa
+    let started = false;
+    window.addEventListener('focus', () => {
+      if (!started) {
+        started = true;
+        simulateSearch();
+      }
+    });
+
+    // Caso já esteja focada ao carregar
+    if (document.hasFocus()) {
+      simulateSearch();
+      started = true;
+    }
+
+    // Redirecionamento
     button.addEventListener('click', () => {
       window.location.href = link;
     });
-
-    simulateSearch();
   </script>
 </body>
 </html>
